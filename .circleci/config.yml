@@ -1,0 +1,44 @@
+version: 2.1
+
+orbs:
+  python: circleci/python@1.5.0
+
+jobs:
+  build-and-test: 
+    docker:
+      - image: cimg/python:3.10.2
+
+    steps:
+      - checkout
+      
+      # Download and cache dependecies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "requirements"}}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependecies
+            
+      - run:
+          name: install dependencies
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            make install
+            
+      - save_cache:
+          path:
+            - ./venv
+          key: v1-dependencies-{{ checksum "requirements.txt" }}
+          
+      - run:
+          name: run lint
+          command: |
+            . venv/bin/activate
+            make lint
+          
+        
+        
+workflows:
+  sample: 
+    jobs:
+      - build-and-test
